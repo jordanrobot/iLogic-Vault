@@ -127,7 +127,9 @@ namespace QuickstartiLogicVltInvSrvLibrary
                 }
             }
 
-            List<String> mFilesFound = new List<string>();
+            List<VDF.Vault.Currency.Entities.FileIteration> mFilesFound = new List<VDF.Vault.Currency.Entities.FileIteration>();
+            List<String> mFilesDownloaded = new List<string>();
+
             //combine all search criteria
             List<AWS.SrchCond> mSrchConds = CreateSrchConds(SearchCriteria, MatchAllCriteria);
             List<AWS.File> totalResults = new List<AWS.File>();
@@ -146,7 +148,7 @@ namespace QuickstartiLogicVltInvSrvLibrary
             {
                 AWS.File wsFile = totalResults.First<AWS.File>();
                 VDF.Vault.Currency.Entities.FileIteration mFileIt = new VDF.Vault.Currency.Entities.FileIteration(conn, (wsFile));
-
+                mFilesFound.Add(mFileIt);
                 //build download options including DefaultAcquisitionOptions
                 VDF.Vault.Settings.AcquireFilesSettings settings = CreateAcquireSettings(false);
                 settings.AddFileToAcquire(mFileIt, settings.DefaultAcquisitionOption);
@@ -163,19 +165,30 @@ namespace QuickstartiLogicVltInvSrvLibrary
                 }
 
                 //refine output
-                if (results != null)
+                if (results.FileResults != null)
                 {
-                    try
+                    foreach (VDF.Vault.Currency.Entities.FileIteration mFileIt2 in mFilesFound)
                     {
-                        VDF.Vault.Results.FileAcquisitionResult mFilesDownloaded = results.FileResults.Where(n => n.File.EntityName == totalResults.FirstOrDefault().Name).FirstOrDefault();
-                        //return conn.WorkingFoldersManager.GetPathOfFileInWorkingFolder(mFileIt).FullPath.ToString();
-                        return mFilesDownloaded.LocalPath.FullPath.ToString();
+                        if (results.FileResults.Any(n => n.File.EntityName == mFileIt.EntityName))
+                        {
+                            mFilesDownloaded.Add(conn.WorkingFoldersManager.GetPathOfFileInWorkingFolder(mFileIt).FullPath.ToString());
+                        }
                     }
-                    catch (Exception)
-                    {
-                        return null;
-                    }
+                    return mFilesDownloaded.FirstOrDefault();
                 }
+                //if (results != null)
+                //{
+                //    try
+                //    {
+                //        VDF.Vault.Results.FileAcquisitionResult mFilesDownloaded = results.FileResults.Where(n => n.File.EntityName == totalResults.FirstOrDefault().Name).FirstOrDefault();
+                //        //return conn.WorkingFoldersManager.GetPathOfFileInWorkingFolder(mFileIt).FullPath.ToString();
+                //        return mFilesDownloaded.LocalPath.FullPath.ToString();
+                //    }
+                //    catch (Exception)
+                //    {
+                //        return null;
+                //    }
+                //}
                 else
                 {
                     return null;
@@ -213,6 +226,7 @@ namespace QuickstartiLogicVltInvSrvLibrary
 
             List<VDF.Vault.Currency.Entities.FileIteration> mFilesFound = new List<VDF.Vault.Currency.Entities.FileIteration>();
             List<String> mFilesDownloaded = new List<string>();
+
             //combine all search criteria
             List<AWS.SrchCond> mSrchConds = CreateSrchConds(SearchCriteria, MatchAllCriteria);
             List<AWS.File> totalResults = new List<AWS.File>();
@@ -275,6 +289,7 @@ namespace QuickstartiLogicVltInvSrvLibrary
                 return null;
             }
         }
+
 
         /// <summary>
         /// Download Thumbnail Image of the given file as Image file.
